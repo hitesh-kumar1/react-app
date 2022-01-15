@@ -1,33 +1,17 @@
-node {
-  try {
-    stage('Checkout') {
-      checkout scm
+pipeline {
+     agent any
+     stages {
+        stage("Build") {
+            steps {
+                sh "sudo npm install"
+                sh "sudo npm run build"
+            }
+        }
+        stage("Deploy") {
+            steps {
+                sh "sudo rm -rf /var/www/jenkins-react-app"
+                sh "sudo cp -r /var/lib/jenkins/workspace/jenkins-react-app/build/ /var/www/jenkins-react-app/"
+            }
+        }
     }
-    stage('Environment') {
-      sh 'git --version'
-      echo "Branch: ${env.BRANCH_NAME}"
-      sh 'docker -v'
-      sh 'printenv'
-    }
-    stage('Build Docker test'){
-      sh 'docker build -t react-test -f Dockerfile.test --no-cache . '
-    }
-    stage('Docker test'){
-      sh 'docker run --rm react-test'
-    }
-    stage('Clean Docker test'){
-      sh 'docker rmi react-test'
-    }
-    stage('Deploy'){
-      if(env.BRANCH_NAME == 'master'){
-        sh 'docker build -t react-app --no-cache .'
-        sh 'docker tag react-app localhost:5000/react-app'
-        sh 'docker push localhost:5000/react-app'
-        sh 'docker rmi -f react-app localhost:5000/react-app'
-      }
-    }
-  }
-  catch (err) {
-    throw err
-  }
 }
